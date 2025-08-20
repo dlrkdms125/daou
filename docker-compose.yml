@@ -1,14 +1,13 @@
 
-version: "3.9"
 
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
-    container_name: es-local
+    container_name: elasticsearch
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false # x-pack 보안 기능 끄기
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m # elasticsearch jvm 힙 메모리 초기/최대 고정
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
       - "9200:9200"
     healthcheck:
@@ -16,74 +15,46 @@ services:
       interval: 10s
       timeout: 5s
       retries: 30
-
-  redis:
-    image: redis:7
-    container_name: es-redis
-    ports:
-      - "6379:6379"
+# db에 healthcheck 넣고 web.depends_on을 healthy로 걸어서 db준비 후 django프로젝트 뜨도록록
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=eschecker
+      - POSTGRES_USER=esuser
+      - POSTGRES_PASSWORD=secret
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U esuser -d eschecker"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   web:
     build: ./app
-    container_name: es-checker-web
+    container_name: web
     environment:
       - DJANGO_DEBUG=1
       - TZ=Asia/Seoul
       - ES_HOST=http://elasticsearch:9200
-      - ES_INDEX=checks-*
+      - ES_INDEX=ssh,su
       - DEMO_MODE=true
-      - CELERY_BROKER_URL=redis://redis:6379/0
+      - SCHEDULER_ENABLED=true
+      - FETCH_INTERVAL_SECONDS=10
+      - DJANGO_SETTINGS_MODULE=eschecker.settings
     depends_on:
       elasticsearch:
         condition: service_healthy
-      redis:
-        condition: service_started
     volumes:
       - ./app/eschecker:/code/eschecker
       - ./app/checks:/code/checks
       - ./app/manage.py:/code/manage.py
       - ./app/static:/code/static
       - ./app/templates:/code/templates
+      - ./app/start.sh:/code/start.sh
     ports:
       - "8000:8000"
     command: ["bash", "/code/start.sh"]
 
-  celery_worker:
-    build: ./app
-    container_name: es-checker-celery
-    environment:
-      - DJANGO_DEBUG=1
-      - TZ=Asia/Seoul
-      - ES_HOST=http://elasticsearch:9200
-      - ES_INDEX=checks-*
-      - DEMO_MODE=true
-      - CELERY_BROKER_URL=redis://redis:6379/0
-    depends_on:
-      - web
-    volumes:
-      - ./app/eschecker:/code/eschecker
-      - ./app/checks:/code/checks
-      - ./app/manage.py:/code/manage.py
-      - ./app/static:/code/static
-      - ./app/templates:/code/templates
-    command: ["bash", "/code/start_celery_worker.sh"]
-
-  celery_beat:
-    build: ./app
-    container_name: es-checker-beat
-    environment:
-      - DJANGO_DEBUG=1
-      - TZ=Asia/Seoul
-      - ES_HOST=http://elasticsearch:9200
-      - ES_INDEX=checks-*
-      - DEMO_MODE=true
-      - CELERY_BROKER_URL=redis://redis:6379/0
-    depends_on:
-      - web
-    volumes:
-      - ./app/eschecker:/code/eschecker
-      - ./app/checks:/code/checks
-      - ./app/manage.py:/code/manage.py
-      - ./app/static:/code/static
-      - ./app/templates:/code/templates
-    command: ["bash", "/code/start_celery_beat.sh"]
+volumes:
+  pgdata:

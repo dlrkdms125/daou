@@ -1,0 +1,4 @@
+﻿{ "index": { "_index": "ssh" } }
+{ "user_id": "techsupport", "hostname": "lingate01a", "server": "app-1", "ip": "192.168.0.11", "reason": "login", "@timestamp": "2025-08-20T09:35:09+09:00", "datetime": "2025-08-20T09:35:09+09:00" }
+{ "index": { "_index": "su" } }
+{ "user_id": "techsupport", "hostname": "lingate01a", "user_id_su": "oracle", "server": "app-1", "ip": "192.168.0.11", "reason": "su", "@timestamp": "2025-08-20T09:35:09+09:00", "datetime": "2025-08-20T09:35:09+09:00" }

@@ -56,7 +56,7 @@
             <td>{{ r.switch_su }}</td>
             <td class="mono">{{ r.sftp_file }}</td>
             <td>{{ r.reason }}</td>
-            <td>{{ "Y" if r.appeal_done else "N" }}</td>
+            <td>{% if r.appeal_done %}Y{% else %}N{% endif %}</td>
             <td>{{ r.status }}</td>
           </tr>
           {% endfor %}

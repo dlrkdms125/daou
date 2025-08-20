@@ -1,4 +1,3 @@
-
 import os
 from pathlib import Path
 
@@ -50,8 +49,12 @@ WSGI_APPLICATION = "eschecker.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DB_NAME", "eschecker"),
+        "USER": os.getenv("DB_USER", "esuser"),
+        "PASSWORD": os.getenv("DB_PASSWORD", "secret"),
+        "HOST": os.getenv("DB_HOST", "db"),
+        "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
 
@@ -60,16 +63,22 @@ TIME_ZONE = os.environ.get("TZ", "Asia/Seoul")
 USE_I18N = True
 USE_TZ = False
 
+# ---- Static files ----
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Elasticsearch & App settings
+# WhiteNoise는 SecurityMiddleware 바로 뒤에 이미 추가되어 있음
+# 배포 시 collectstatic 필요:
+#   python manage.py collectstatic
+# 옵션: 압축/매니페스트 스토리지 사용하려면 아래 주석 해제
+# STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# ---- Elasticsearch ----
 ES_HOST = os.environ.get("ES_HOST", "http://localhost:9200")
 ES_INDEX = os.environ.get("ES_INDEX", "checks-*")
 DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
 
-# Celery
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = CELERY_BROKER_URL
-CELERY_TIMEZONE = TIME_ZONE
+# ---- 스케줄러(선택) ----
+SCHEDULER_ENABLED = os.environ.get("SCHEDULER_ENABLED", "true").lower() == "true"
+FETCH_INTERVAL_SECONDS = int(os.environ.get("FETCH_INTERVAL_SECONDS", "60"))

@@ -20,7 +20,6 @@ COPY checks /code/checks
 COPY templates /code/templates
 COPY static /code/static
 COPY start.sh /code/start.sh
-COPY start_celery_worker.sh /code/start_celery_worker.sh
-COPY start_celery_beat.sh /code/start_celery_beat.sh
+
 
 EXPOSE 8000
