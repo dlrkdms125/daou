@@ -47,14 +47,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "eschecker.wsgi.application"
 
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
+        "HOST": os.getenv("DB_HOST", "db"),
+        "PORT": os.getenv("DB_PORT", "5432"),
         "NAME": os.getenv("DB_NAME", "eschecker"),
         "USER": os.getenv("DB_USER", "esuser"),
         "PASSWORD": os.getenv("DB_PASSWORD", "secret"),
-        "HOST": os.getenv("DB_HOST", "db"),
-        "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
 
@@ -76,7 +77,7 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # ---- Elasticsearch ----
 ES_HOST = os.environ.get("ES_HOST", "http://localhost:9200")
-ES_INDEX = os.environ.get("ES_INDEX", "checks-*")
+ES_INDEX = os.environ.get("ES_INDEX", "check*")
 DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
 
 # ---- 스케줄러(선택) ----
