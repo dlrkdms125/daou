@@ -1,37 +1,34 @@
-# checks/tasks.py
-from django.conf import settings
 from elasticsearch import Elasticsearch
+from django.conf import settings
 from .models import CheckRecord
-from datetime import datetime, date  # ← dt 대신 직접 씀
+
+def save_es_doc_to_pg(es_doc):
+    record = CheckRecord(
+        date=es_doc["@timestamp"].split("T")[0],
+        time=es_doc["@timestamp"].split("T")[1][:8],
+        item=es_doc.get("item", ""),
+        server=es_doc.get("server", ""),
+        user=es_doc.get("user", ""),
+        ip=es_doc.get("ip", ""),
+        switch_su=es_doc.get("switch_su", ""),
+        sftp_file=es_doc.get("sftp_file", ""),
+        reason=es_doc.get("reason", ""),
+        appeal_done=es_doc.get("appeal_done", False),
+        status=es_doc.get("status", "new")
+    )
+    record.save()
 
 def fetch_from_es():
+    print("Fetching data from Elasticsearch...")
     es = Elasticsearch(settings.ES_HOST)
-    # 여러 인덱스를 쉼표로 받도록: 예) "ssh,su"
-    index = settings.ES_INDEX
-    query = {
-        "bool": {
-            "should": [
-                {"range": {"@timestamp": {"gte": "now-2h", "lte": "now"}}},
-                {"range": {"datetime":   {"gte": "now-2h", "lte": "now"}}},
-            ],
-            "minimum_should_match": 1,
-        }
-    }
 
-    res = es.search(index=index, query=query, size=1000)
-    # 이미 _source만 추출해 두고
-    sources = [h.get("_source", {}) for h in res.get("hits", {}).get("hits", [])]
+    res = es.search(
+        index=settings.ES_INDEX,
+        body={"query": {"match_all": {}}, "size": 10, "sort": [{"@timestamp": "desc"}]}
+    )
 
-    created = 0
-    for src in sources:  # ← 여기서는 src가 곧 문서 본문
-        now = datetime.now()
-        CheckRecord.objects.create(
-            date   = src.get("date") or date.today(),
-            time   = src.get("time") or now.strftime("%H:%M:%S"),
-            server = src.get("server", "unknown"),
-            ip     = src.get("ip", ""),
-            reason = src.get("reason", ""),
-            # 필요하면 item/user/status 등 추가
-        )
-        created += 1
-    return created
+    for hit in res["hits"]["hits"]:
+        es_doc = hit["_source"]
+        save_es_doc_to_pg(es_doc)
+
+    print(f"Fetched {len(res['hits']['hits'])} docs")

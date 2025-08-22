@@ -1,4 +1,4 @@
-﻿{ "index": { "_index": "ssh" } }
-{ "user_id": "techsupport", "hostname": "lingate01a", "server": "app-1", "ip": "192.168.0.11", "reason": "login", "@timestamp": "2025-08-20T09:35:09+09:00", "datetime": "2025-08-20T09:35:09+09:00" }
-{ "index": { "_index": "su" } }
-{ "user_id": "techsupport", "hostname": "lingate01a", "user_id_su": "oracle", "server": "app-1", "ip": "192.168.0.11", "reason": "su", "@timestamp": "2025-08-20T09:35:09+09:00", "datetime": "2025-08-20T09:35:09+09:00" }
+﻿{ "index": { "_index": "check" } }
+{ "item": "SSH 로그인", "server": "app-1", "user": "techsupport", "ip": "192.168.0.11", "switch_su": "-", "sftp_file": "-", "reason": "login", "appeal_done": false, "status": "new", "@timestamp": "2025-08-22T10:35:09+09:00" }
+{ "index": { "_index": "check" } }
+{ "item": "SU 계정 전환", "server": "app-1", "user": "oracle", "ip": "192.168.0.11", "switch_su": "oracle", "sftp_file": "-", "reason": "su", "appeal_done": false, "status": "new", "@timestamp": "2025-08-22T10:36:09+09:00" }

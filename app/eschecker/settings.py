@@ -81,5 +81,7 @@ ES_INDEX = os.environ.get("ES_INDEX", "check*")
 DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
 
 # ---- 스케줄러(선택) ----
-SCHEDULER_ENABLED = os.environ.get("SCHEDULER_ENABLED", "true").lower() == "true"
-FETCH_INTERVAL_SECONDS = int(os.environ.get("FETCH_INTERVAL_SECONDS", "60"))
+SCHEDULER_ENABLED = True
+FETCH_INTERVAL_SECONDS = int(os.getenv("FETCH_INTERVAL_SECONDS", 10))
+ES_HOST = os.getenv("ES_HOST", "http://elasticsearch:9200")
+ES_INDEX = os.getenv("ES_INDEX", "check")
