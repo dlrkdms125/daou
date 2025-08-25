@@ -1,5 +1,5 @@
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseNotFound
 from django.db.models import Q
 from .models import CheckRecord, PersonalLink
@@ -46,3 +46,9 @@ def personal_page(request, uuid):
     except PersonalLink.DoesNotExist:
         return HttpResponseNotFound("<h3>잘못된 링크입니다.</h3>")
     return redirect(f"/check?user={pl.user_key}")
+
+def user_check_list(request, token):
+    link = get_object_or_404(PersonalLink, token=token)
+    username = link.user_key
+    records = CheckRecord.objects.filter(user=username).order_by("-date", "-time")
+    return render(request, "check.html", {"records": records, "username": username})
