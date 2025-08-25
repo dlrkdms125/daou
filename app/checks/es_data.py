@@ -13,4 +13,4 @@ def feed():
         }
         r = requests.post(f"{ES_URL}?refresh=wait_for", json=doc)
         print("Inserted into ES:", r.json())
-        time.sleep(10)  # 10초 주기
+        time.sleep(3600)  # 10초 주기
