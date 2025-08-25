@@ -3,18 +3,20 @@ from django.conf import settings
 
 def start_if_enabled():
     if not settings.SCHEDULER_ENABLED:
-        print("sheduler disabled")
+        print("scheduler disabled")
         return
+
     from checks.tasks import fetch_from_es
+
     sch = BackgroundScheduler(timezone=settings.TIME_ZONE)
     sch.add_job(
         fetch_from_es,
-        "interval",
-        seconds=settings.FETCH_INTERVAL_SECONDS,
+        "cron",
+        hour=0, minute=0,   # 매일 자정 00:00 실행
         id="fetch_from_es_job",
-        replace_existing=True,  
+        replace_existing=True,
         max_instances=1,
         coalesce=True,
     )
     sch.start()
-    print(f"Scheduler started, interval={settings.FETCH_INTERVAL_SECONDS}")
+    print("Scheduler started: runs daily at 00:00")
