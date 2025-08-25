@@ -20,3 +20,4 @@ def start_if_enabled():
     )
     sch.start()
     print("Scheduler started: runs daily at 00:00")
+
