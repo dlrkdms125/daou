@@ -1,11 +1,11 @@
 
 from django.db import models
 import uuid
-import base64 
+
 
 class CheckRecord(models.Model):
-    date = models.CharField(max_length=10, db_index=True)  # YYYY-MM-DD
-    time = models.CharField(max_length=8)                  # HH:MM:SS
+    date = models.DateField()  # YYYY-MM-DD
+    time = models.TimeField()                # HH:MM:SS
     item = models.CharField(max_length=100)                # 점검항목
     server = models.CharField(max_length=100)
     user = models.CharField(max_length=100)                # 접속자
@@ -17,5 +17,5 @@ class CheckRecord(models.Model):
     status = models.CharField(max_length=20, default="미입력")
 
 class PersonalLink(models.Model):
-    user_key = models.CharField(max_length=100, db_index=True)  # 접속자 이름
-    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)  # URL 토큰
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    user_key = models.CharField(max_length=100, db_index=True)

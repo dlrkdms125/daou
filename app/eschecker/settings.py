@@ -3,7 +3,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "dev-secret-key"
-DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
+DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1" # os 환경변수 DJANGO_DEBUG 값을 가져오는데, 없으면 기본값0을 사용하고 1이면 TRUE, 아니면 FALSE
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
@@ -51,7 +51,7 @@ WSGI_APPLICATION = "eschecker.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "HOST": os.getenv("DB_HOST", "db"),
+        "HOST": os.getenv("DB_HOST", "127.0.0.1"),
         "PORT": os.getenv("DB_PORT", "5432"),
         "NAME": os.getenv("DB_NAME", "eschecker"),
         "USER": os.getenv("DB_USER", "kaeunlee"),

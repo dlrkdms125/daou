@@ -1,16 +1,58 @@
-
 <!DOCTYPE html>
+    {% load dict_extras %}
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>점검/소명 관리</title>
   <link rel="stylesheet" href="/static/style.css"/>
+  <style>
+    /* 요약 집계표 */
+    .summary-table table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .summary-table th, .summary-table td {
+      border: 1px solid #000;
+      padding: 6px 10px;
+      text-align: center;
+    }
+    .summary-table th {
+      background: #f5f5f5;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
   <header class="topbar">
-    <div class="left">
-    </div>
+    <!--지난주 요약 표 -->
+<div class="summary-table">
+  <h2>지난주 요약 ({{ last_monday }} ~ {{ last_sunday }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>점검항목</th>
+        {% for d in dates %}
+          <th>{{ d }}</th>
+        {% endfor %}
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item, data in pivot.items %}
+  <tr>
+    <td>{{ category_labels|get_item:item }}</td>
+    {% for d in dates %}
+      <td>{{ data|get_item:d }}</td>
+    {% endfor %}
+    <td>{{ data|get_item:"total" }}</td>
+  </tr>
+{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+
     <form class="right" method="get" action="/check">
       <input type="date" name="start" value="{{ start }}"/>
       <span>~</span>

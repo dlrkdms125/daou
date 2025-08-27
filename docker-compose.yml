@@ -11,7 +11,6 @@ services:
     ports:
       - "9200:9200"
     healthcheck:
-      # ES가 응답하면 healthy
       test: ["CMD-SHELL", "curl -fs http://localhost:9200 > /dev/null || exit 1"]
       interval: 10s
       timeout: 5s
@@ -31,40 +30,8 @@ services:
       retries: 20
     volumes:
       - pgdata:/var/lib/postgresql/data
-    # 로컬에서 직접 psql 접속 필요하면 열어둬 (선택)
-    # ports:
-    #   - "5432:5432"
-
-  web:
-    build: ./app
-    container_name: web
-    environment:
-      - DJANGO_DEBUG=1
-      - TZ=Asia/Seoul
-      - DJANGO_SETTINGS_MODULE=eschecker.settings
-      # DB 접속 정보 (Django settings에서 os.getenv로 읽도록)
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=eschecker
-      - DB_USER=kaeunlee
-      - DB_PASSWORD=qwer1234
-      # Elasticsearch
-      - ES_HOST=http://elasticsearch:9200
-      - ES_INDEX=check
-      # 앱 옵션
-      - SCHEDULER_ENABLED=true
-      - FETCH_INTERVAL_SECONDS=3600
-      - DEMO_MODE=false
-    depends_on:
-      db:
-        condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
-    volumes:
-      - ./app:/code
     ports:
-      - "8000:8000"
-    command: ["bash", "/code/start.sh"]
+      - "5432:5432"   # 로컬 Django가 DB 접속할 수 있도록 열어줘야 함
 
 volumes:
   pgdata:
