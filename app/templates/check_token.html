@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+    {% load dict_extras %}
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>점검/소명 관리</title>
+  <link rel="stylesheet" href="/static/style.css"/>
+  <style>
+    /* 요약 집계표 */
+    .summary-table table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .summary-table th, .summary-table td {
+      border: 1px solid #000;
+      padding: 6px 10px;
+      text-align: center;
+    }
+    .summary-table th {
+      background: #f5f5f5;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+
+
+    <form class="right" method="get" action="/check">
+      <input type="date" name="start" value="{{ start }}"/>
+      <span>~</span>
+      <input type="date" name="end" value="{{ end }}"/>
+      <input type="text" name="user" placeholder="접속자" value="{{ user }}"/>
+      <button class="btn primary" type="submit">검색</button>
+    </form>
+  </header>
+
+  <main class="container">
+    <h2>총 {{ total }}건 중, 입력완료 {{ complete }}건</h2>
+    <div class="table-wrapper">
+      <table class="grid">
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>시간</th>
+            <th>점검항목</th>
+            <th>서버</th>
+            <th>접속자</th>
+            <th>IP</th>
+            <th>스위치계정<br/>(SU)</th>
+            <th>SFTP파일</th>
+            <th>사유</th>
+            <th>소명여부</th>
+            <th>관리</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if results|length == 0 %}
+          <tr><td colspan="11" style="text-align:center;color:#888;">데이터가 없습니다.</td></tr>
+          {% else %}
+          {% for r in results %}
+          <tr>
+            <td>{{ r.date }}</td>
+            <td>{{ r.time }}</td>
+            <td>{{ r.item }}</td>
+            <td>{{ r.server }}</td>
+            <td>{{ r.user }}</td>
+            <td>{{ r.ip }}</td>
+            <td>{{ r.switch_su }}</td>
+            <td class="mono">{{ r.sftp_file }}</td>
+            <td>{{ r.reason }}</td>
+            <td>{% if r.appeal_done %}Y{% else %}N{% endif %}</td>
+            <td>{{ r.status }}</td>
+          </tr>
+          {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>
