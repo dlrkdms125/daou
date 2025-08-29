@@ -8,7 +8,7 @@ def send_access_mail(user: str, to_email: str):
     url = create_access_token(user)
 
     # 2. 메일 본문 작성
-    subject = f"{user} 접속 알림림"
+    subject = f"{user} 접속 알림"
     body = f"{user} 님의 데이터는 아래 링크에서 확인할 수 있습니다:\n\n{url}"
 
     # 3. 메일 전송 설정

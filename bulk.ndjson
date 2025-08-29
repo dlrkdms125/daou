@@ -144,3 +144,4 @@
 { "item": "SU 계정 전환", "server": "app-1", "user": "oracle", "ip": "192.168.0.24", "switch_su": "admin", "sftp_file": "-", "reason": "sh", "appeal_done": false, "status": "new", "@timestamp": "2025-08-24T16:49:31+09:00" }
 { "index": { "_index": "check" } }
 { "item": "SSH 로그인", "server": "app-1", "user": "admin", "ip": "192.168.0.25", "switch_su": "-", "sftp_file": "-", "reason": "window", "appeal_done": false, "status": "new", "@timestamp": "2025-08-24T17:56:44+09:00" }
+

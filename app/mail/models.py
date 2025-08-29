@@ -1,12 +1,16 @@
 import uuid
 from django.db import models
+from datetime import timedelta
+from django.utils import timezone
+
+def get_expired_at():
+    return timezone.now()+timedelta(weeks=2)
 
 class AccessToken(models.Model):
     token = models.UUIDField(default=uuid.uuid4, unique=True)
     user = models.CharField(max_length=100)  
     created_at = models.DateTimeField(auto_now_add=True)
-    expired_at = models.DateTimeField(null=True, blank=True)
-
+    expired_at = models.DateTimeField(default=get_expired_at)
 
 def create_access_token(user: str):
     token_obj = AccessToken.objects.create(user=user)
