@@ -26,33 +26,31 @@
 <body>
   <header class="topbar">
     <!--지난주 요약 표 -->
-<div class="summary-table">
-  <h2>지난주 요약 ({{ last_monday }} ~ {{ last_sunday }})</h2>
-  <table>
-    <thead>
+    <div class="summary-table">
+      <h2>지난주 요약 ({{ last_monday }} ~ {{ last_sunday }})</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>점검항목</th>
+            {% for d in dates %}
+              <th>{{ d }}</th>
+            {% endfor %}
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item, data in pivot.items %}
       <tr>
-        <th>점검항목</th>
+        <td>{{ category_labels|get_item:item }}</td>
         {% for d in dates %}
-          <th>{{ d }}</th>
+          <td>{{ data|get_item:d }}</td>
         {% endfor %}
-        <th>Total</th>
+        <td>{{ data|get_item:"total" }}</td>
       </tr>
-    </thead>
-    <tbody>
-      {% for item, data in pivot.items %}
-  <tr>
-    <td>{{ category_labels|get_item:item }}</td>
-    {% for d in dates %}
-      <td>{{ data|get_item:d }}</td>
     {% endfor %}
-    <td>{{ data|get_item:"total" }}</td>
-  </tr>
-{% endfor %}
-    </tbody>
-  </table>
-</div>
-
-
+        </tbody>
+      </table>
+    </div>
     <form class="right" method="get" action="/check">
       <input type="date" name="start" value="{{ start }}"/>
       <span>~</span>

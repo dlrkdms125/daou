@@ -24,8 +24,8 @@ def send_access_mail(user: str, to_email: str):
 
     # 4. 메일 전송
     with smtplib.SMTP(smtp_server, smtp_port) as server:
-        server.starttls()
-        server.login(sender, password)
+        server.starttls() # tls암호화화
+        server.login(sender, password) 
         server.send_message(msg)
 
     return True
