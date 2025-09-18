@@ -136,33 +136,23 @@ def check_by_token(request, token):
     access_token = get_object_or_404(AccessToken, token=token)
     user = access_token.user
 
-    # 2. user 기반으로 기존 check_view 로직 재사용
-    today = date.today()
-    last_monday = today - timedelta(days=today.isoweekday() + 6)
-    last_sunday = last_monday + timedelta(days=6)
+    # 2. 전날 날짜 계산
+    yesterday = date.today() - timedelta(days=1)
 
-    q = Q(user=user)
+    # 3. 시간대 범위 정의 (00:00~05:59, 21:00~23:59)
+    start1, end1 = time(0, 0), time(5, 59, 59)
+    start2, end2 = time(21, 0), time(23, 59, 59)
 
-    records = CheckRecord.objects.filter(date__range=[last_monday, last_sunday]).filter(q)
+    # 4. 조건 필터링
+    q = Q(user=user, date=yesterday) & (
+        Q(time__range=(start1, end1)) |
+        Q(time__range=(start2, end2))
+    )
 
-    # 야간/주말 필터링
-    filtered_ids = []
-    for r in records:
-        dt = datetime.combine(r.date, r.time)
-        weekday = dt.weekday()
-        if weekday < 5:
-            if dt.time() >= time(21,0) or dt.time() < time(6,0):
-                filtered_ids.append(r.id)
-        else:
-            filtered_ids.append(r.id)
+    records = CheckRecord.objects.filter(q).order_by("date", "time")
 
-    weekly_records = records.filter(id__in=filtered_ids)
-
-    # pivot 집계 (원래 check_view 코드 그대로)
-    dates = [last_monday + timedelta(days=i) for i in range(7)]
-    date_strs = [d.strftime("%Y-%m-%d") for d in dates]
-
-    categories = ["ssh","su","sftp","window"]
+    # 5. pivot 집계 (원래 로직 유지)
+    categories = ["ssh", "su", "sftp", "window"]
     category_labels = {
         "ssh": "SSH 접속 로그",
         "su": "SU 접속 로그",
@@ -170,11 +160,9 @@ def check_by_token(request, token):
         "window": "Window 로그",
     }
 
-    pivot = {cat: {d: 0 for d in date_strs} for cat in categories}
-    for cat in categories:
-        pivot[cat]["total"] = 0
+    pivot = {cat: {str(yesterday): 0, "total": 0} for cat in categories}
 
-    for r in weekly_records:
+    for r in records:
         d = r.date.strftime("%Y-%m-%d")
         if r.reason == "ssh":
             pivot["ssh"][d] += 1
@@ -190,18 +178,18 @@ def check_by_token(request, token):
             pivot["window"]["total"] += 1
 
     context = {
-        "results": weekly_records,
+        "results": records,
         "pivot": pivot,
-        "dates": date_strs,
+        "dates": [yesterday.strftime("%Y-%m-%d")],
         "category_labels": category_labels,
-        "complete": weekly_records.filter(appeal_done=True).count(),
-        "total": weekly_records.count(),
-        "last_monday": last_monday,
-        "last_sunday": last_sunday,
-        "user": user,  
+        "complete": records.filter(appeal_done=True).count(),
+        "total": records.count(),
+        "yesterday": yesterday,
+        "user": user,
     }
 
     return render(request, "check_token.html", context)
+
 
 
 
