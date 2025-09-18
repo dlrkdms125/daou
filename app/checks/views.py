@@ -6,40 +6,14 @@ from datetime import date, timedelta, datetime, time
 from mail.models import AccessToken
 
 
-def root(request):
+def root(request): # / 로 접속하면 자동으로 /check 페이지로 리다이렉트
     return redirect("check")
-
-# def check_page(request):
-#     start = request.GET.get("start") or ""
-#     end = request.GET.get("end") or ""
-#     user = request.GET.get("user") or ""
-
-#     q = Q()
-#     if start:
-#         q &= Q(date__gte=start)
-#     if end:
-#         q &= Q(date__lte=end)
-#     if user:
-#         q &= Q(user=user)
-
-#     results = list(CheckRecord.objects.filter(q).order_by("-date","-time"))
-#     total = len(results)
-#     complete = len([r for r in results if r.status == "완료"])
-
-#     return render(request, "check.html", {
-#         "results": results,
-#         "total": total,
-#         "complete": complete,
-#         "start": start,
-#         "end": end,
-#         "user": user,
-#     })
 
 def create_link(request):
     user_key = request.GET.get("user_key")
     if not user_key:
         return JsonResponse({"error": "user_key required"}, status=400)
-    pl = PersonalLink.objects.create(user_key=user_key)
+    pl = PersonalLink.objects.create(user_key=user_key) # user_key가 있으면 PersonalLink 객체 생성: uuid발급
     return JsonResponse({"uuid": str(pl.uuid), "link": f"/p/{pl.uuid}"})
 
 def personal_page(request, uuid):
@@ -47,15 +21,19 @@ def personal_page(request, uuid):
         pl = PersonalLink.objects.get(uuid=uuid)
     except PersonalLink.DoesNotExist:
         return HttpResponseNotFound("<h3>잘못된 링크입니다.</h3>")
-    return redirect(f"/check?user={pl.user_key}")
+    return redirect(f"/check?user={pl.user_key}") # check_view 로직 재사용함
 
-
+from django.shortcuts import render
+from django.db.models import Q
+from datetime import date, timedelta, datetime, time
+from .models import CheckRecord
 
 def check_view(request):
     start = request.GET.get("start") or ""
     end = request.GET.get("end") or ""
     user = request.GET.get("user") or ""
 
+    # 조건이 바뀔 수 있어서 Q 객체 사용
     q = Q()
     if start:
         q &= Q(date__gte=start)
@@ -65,18 +43,21 @@ def check_view(request):
         q &= Q(user=user)
 
     today = date.today()
-    last_monday = today - timedelta(days=today.isoweekday()+6)
-    last_sunday = last_monday+timedelta(days=6)
+    last_monday = today - timedelta(days=today.isoweekday() + 6)
+    last_sunday = last_monday + timedelta(days=6)
 
+    # ======================
+    # 지난주 요약용 데이터
+    # ======================
     records = CheckRecord.objects.filter(date__range=[last_monday, last_sunday]).filter(q)
 
     # 평일 21~06시 / 주말 24시간 필터
     filtered_ids = []
-    for r in records: 
+    for r in records:
         dt = datetime.combine(r.date, r.time)
         weekday = dt.weekday()
-        if weekday < 5: 
-            if dt.time() >= time(21,0) or dt.time() < time(6,0):
+        if weekday < 5:
+            if dt.time() >= time(21, 0) or dt.time() < time(6, 0):
                 filtered_ids.append(r.id)
         else:
             filtered_ids.append(r.id)
@@ -87,7 +68,7 @@ def check_view(request):
     dates = [last_monday + timedelta(days=i) for i in range(7)]
     date_strs = [d.strftime("%Y-%m-%d") for d in dates]
 
-    categories = ["ssh","su","sftp","window"]
+    categories = ["ssh", "su", "sftp", "window"]
     category_labels = {
         "ssh": "SSH 접속 로그",
         "su": "SU 접속 로그",
@@ -99,7 +80,7 @@ def check_view(request):
     pivot = {cat: {d: 0 for d in date_strs} for cat in categories}
     for cat in categories:
         pivot[cat]["total"] = 0
-    
+
     for r in weekly_records:
         d = r.date.strftime("%Y-%m-%d")
         if r.reason == "ssh":
@@ -115,8 +96,13 @@ def check_view(request):
             pivot["window"][d] += 1
             pivot["window"]["total"] += 1
 
+    # ======================
+    # 전체 데이터 (밑에 테이블)
+    # ======================
+    all_records = CheckRecord.objects.filter(q).order_by("-date", "-time")
+
     context = {
-        "results": weekly_records,
+        # 위쪽 표: 지난주 요약
         "pivot": pivot,
         "dates": date_strs,
         "category_labels": category_labels,
@@ -124,6 +110,11 @@ def check_view(request):
         "total": weekly_records.count(),
         "last_monday": last_monday,
         "last_sunday": last_sunday,
+
+        # 아래쪽 표: 전체 데이터
+        "results": all_records,
+
+        # 검색 파라미터
         "start": start,
         "end": end,
         "user": user,
@@ -137,6 +128,7 @@ def check_view(request):
         traceback.print_exc()
         from django.http import HttpResponse
         return HttpResponse(f"Error: {e}", status=500)
+
 
 
 def check_by_token(request, token):
