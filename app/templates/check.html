@@ -7,7 +7,6 @@
   <title>점검/소명 관리</title>
   <link rel="stylesheet" href="/static/style.css"/>
   <style>
-    /* 요약 집계표 */
     .summary-table table {
       border-collapse: collapse;
       width: 100%;
@@ -21,6 +20,17 @@
       background: #f5f5f5;
       font-weight: bold;
     }
+    td.mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+    word-break: break-all;
+    white-space: normal;
+    max-width: 200px;
+  }
+  td.reason-col {
+    word-break: break-word;
+    white-space: normal;
+    max-width: 150px;
+  }
   </style>
 </head>
 <body>
@@ -93,7 +103,7 @@
             <td>{{ r.ip }}</td>
             <td>{{ r.switch_su }}</td>
             <td class="mono">{{ r.sftp_file }}</td>
-            <td>{{ r.reason }}</td>
+            <td class="reason-col">{{ r.reason }}</td>
             <td>{% if r.appeal_done %}Y{% else %}N{% endif %}</td>
             <td>{{ r.status }}</td>
           </tr>
