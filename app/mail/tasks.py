@@ -20,9 +20,8 @@ def send_scheduled_mails():
 
     logs = logs1 | logs2
 
-    users = logs.values_list("user", flat=True).distinct()
-    users = [u.strip().lower() for u in users if u]
-
+    users = logs.values_list("user", flat=True)
+    users = set(u.strip().lower() for u in users if u)
 
     if not users:
         print("메일 발송 대상 없음")

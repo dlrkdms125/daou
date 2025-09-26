@@ -13,6 +13,7 @@ class AccessToken(models.Model):
     expired_at = models.DateTimeField(default=get_expired_at)
 
 def create_access_token(user: str):
+    user = user.strip().lower()  # 공백, 대소문자 차이 제거
     token_obj = AccessToken.objects.create(user=user)
     return f"http://127.0.0.1:8000/check/{token_obj.token}"
 
