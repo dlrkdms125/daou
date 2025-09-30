@@ -15,21 +15,3 @@ table.grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 form.right input[type="date"], form.right input[type="text"] { padding: 8px; border: 1px solid #cfd4dc; border-radius: 8px; margin-right: 8px; }
 
-<style>
-  /* 기존 summary-table 스타일은 유지 */
-
-  /* ✅ 긴 SFTP 경로 줄바꿈용 */
-  td.mono {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
-    word-break: break-all;
-    white-space: normal;
-    max-width: 200px;
-  }
-
-  /* ✅ 사유 열 스타일 */
-  td.reason-col {
-    word-break: break-word;
-    white-space: normal;
-    max-width: 150px;
-  }
-</style>
