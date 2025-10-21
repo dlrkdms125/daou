@@ -34,12 +34,12 @@ from django.http import HttpResponse
 
 
 def check_view(request):
-    # 1️⃣ 검색 조건 파라미터
+    # 검색 조건 파라미터
     start = request.GET.get("start") or ""
     end = request.GET.get("end") or ""
     user = request.GET.get("user") or ""
 
-    # 2️⃣ 지난주 날짜 계산
+    # 지난주 날짜 계산
     today = date.today()
     last_monday = today - timedelta(days=today.isoweekday() + 6)
     last_sunday = last_monday + timedelta(days=6)
@@ -115,6 +115,7 @@ def check_view(request):
         # ==========================
         # [C] 컨텍스트 구성
         # ==========================
+        # context는 장고에서 템플릿(.html)로 데이터를 넘겨주는 딕셔너리
         context = {
             # 위쪽 표
             "pivot": pivot,
