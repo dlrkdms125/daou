@@ -15,7 +15,7 @@ def send_access_mail(user: str, to_email: str):
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
     sender = "somethingisnothing125@gmail.com"
-    password = "qars ckgj rvbm rkng"   # ⚠️ Gmail 앱 비밀번호 필요
+    password = "emezhzjkjumaimbo"
 
     msg = MIMEText(body)
     msg["Subject"] = subject
@@ -24,7 +24,7 @@ def send_access_mail(user: str, to_email: str):
 
     # 4. 메일 전송
     with smtplib.SMTP(smtp_server, smtp_port) as server:
-        server.starttls() # tls암호화화
+        server.starttls() # tls암호화
         server.login(sender, password) 
         server.send_message(msg)
 

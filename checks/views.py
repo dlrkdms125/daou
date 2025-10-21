@@ -113,6 +113,7 @@ def check_view(request):
 
         # 아래쪽 표: 전체 데이터
         "results": all_records,
+        "total": all_records.count(),
 
         # 검색 파라미터
         "start": start,

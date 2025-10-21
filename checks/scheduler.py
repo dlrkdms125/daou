@@ -1,7 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from django.conf import settings
 
-# ✅ 중복 실행 방지를 위한 전역 변수
+#  중복 실행 방지를 위한 전역 변수
 _scheduler_started = False
 
 def start_if_enabled():
@@ -15,10 +15,11 @@ def start_if_enabled():
     if not settings.SCHEDULER_ENABLED:
         print("scheduler disabled")
         return
-
+    # 스케줄러가 주기적으로 실행할 함수
     from checks.tasks import fetch_from_es
     from mail.tasks import send_scheduled_mails
 
+    # BackgroundScheduler 객체 생성(백그라운드에서 비동기적으로 동작)
     sch = BackgroundScheduler(timezone=settings.TIME_ZONE)
 
     sch.add_job(
@@ -26,20 +27,20 @@ def start_if_enabled():
         "cron",
         hour=0, minute=0,
         id="fetch_from_es_job",
-        replace_existing=True,
-        max_instances=1,
-        coalesce=True,
+        replace_existing=True, # 동일 ID의 job이 있으면 덮어쓰기
+        max_instances=1, 
+        coalesce=True, # 서버가 잠깐 멈췄다가 재시작된 경우, 밀린 job은 한번만 실행
     )
 
     sch.add_job(
         send_scheduled_mails,
         "cron",
-        hour=11, minute=00,
+        hour=13, minute=56,
         id="send_mail_job",
         replace_existing=True,
         max_instances=1,
         coalesce=True,
     )
 
-    sch.start()
+    sch.start() # 스케줄러 실행
     print("[LOG] Scheduler started successfully.")
