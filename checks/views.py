@@ -27,113 +27,120 @@ def personal_page(request, uuid):
         return HttpResponseNotFound("<h3>잘못된 링크입니다.</h3>")
     return redirect(f"/check?user={pl.user_key}") # check_view 로직 재사용함
 
-from django.shortcuts import render
-from django.db.models import Q
+from elasticsearch import Elasticsearch
 from datetime import date, timedelta, datetime, time
-from .models import CheckRecord
+from django.shortcuts import render
+from django.http import HttpResponse
+
 
 def check_view(request):
+    # 1️⃣ 검색 조건 파라미터
     start = request.GET.get("start") or ""
     end = request.GET.get("end") or ""
     user = request.GET.get("user") or ""
 
-    # 조건이 바뀔 수 있어서 Q 객체 사용
-    q = Q()
-    if start:
-        q &= Q(date__gte=start)
-    if end:
-        q &= Q(date__lte=end)
-    if user:
-        q &= Q(user=user)
-
+    # 2️⃣ 지난주 날짜 계산
     today = date.today()
     last_monday = today - timedelta(days=today.isoweekday() + 6)
     last_sunday = last_monday + timedelta(days=6)
 
-    # ======================
-    # 지난주 요약용 데이터
-    # ======================
-    records = CheckRecord.objects.filter(date__range=[last_monday, last_sunday]).filter(q)
-
-    # 평일 21~06시 / 주말 24시간 필터
-    filtered_ids = []
-    for r in records:
-        dt = datetime.combine(r.date, r.time)
-        weekday = dt.weekday()
-        if weekday < 5:
-            if dt.time() >= time(21, 0) or dt.time() < time(6, 0):
-                filtered_ids.append(r.id)
-        else:
-            filtered_ids.append(r.id)
-
-    weekly_records = records.filter(id__in=filtered_ids)
-
-    # 날짜, 카테고리 정의
-    dates = [last_monday + timedelta(days=i) for i in range(7)]
-    date_strs = [d.strftime("%Y-%m-%d") for d in dates]
-
-    categories = ["ssh", "su", "sftp", "window"]
-    category_labels = {
-        "ssh": "SSH 접속 로그",
-        "su": "SU 접속 로그",
-        "sftp": "SFTP 로그",
-        "window": "Window 로그",
-    }
-
-    # pivot 집계
-    pivot = {cat: {d: 0 for d in date_strs} for cat in categories}
-    for cat in categories:
-        pivot[cat]["total"] = 0
-
-    for r in weekly_records:
-        d = r.date.strftime("%Y-%m-%d")
-        if r.reason == "ssh":
-            pivot["ssh"][d] += 1
-            pivot["ssh"]["total"] += 1
-        if r.reason == "su":
-            pivot["su"][d] += 1
-            pivot["su"]["total"] += 1
-        if getattr(r, "sftp_file", "-") and r.sftp_file != "-":
-            pivot["sftp"][d] += 1
-            pivot["sftp"]["total"] += 1
-        if r.reason == "window":
-            pivot["window"][d] += 1
-            pivot["window"]["total"] += 1
-
-    # ======================
-    # 전체 데이터 (밑에 테이블)
-    # ======================
-    all_records = CheckRecord.objects.filter(q).order_by("-date", "-time")
-
-    context = {
-        # 위쪽 표: 지난주 요약
-        "pivot": pivot,
-        "dates": date_strs,
-        "category_labels": category_labels,
-        "complete": weekly_records.filter(appeal_done=True).count(),
-        "total": weekly_records.count(),
-        "last_monday": last_monday,
-        "last_sunday": last_sunday,
-
-        # 아래쪽 표: 전체 데이터
-        "results": all_records,
-        "total": all_records.count(),
-
-        # 검색 파라미터
-        "start": start,
-        "end": end,
-        "user": user,
-    }
-
     try:
+        # ==========================
+        # [A] 위쪽 표: Elasticsearch
+        # ==========================
+        es = Elasticsearch("http://localhost:9200")
+
+        must_conditions = [
+            {"range": {"date": {"gte": last_monday.strftime("%Y-%m-%d"),
+                                "lte": last_sunday.strftime("%Y-%m-%d")}}}
+        ]
+        if user:
+            must_conditions.append({"term": {"user.keyword": user}})
+
+        query = {
+            "query": {"bool": {"must": must_conditions}},
+            "size": 10000
+        }
+
+        res = es.search(index="checks_checkrecord", body=query)
+        es_records = [hit["_source"] for hit in res["hits"]["hits"]]
+
+        # pivot 집계
+        categories = ["ssh", "su", "sftp", "window"]
+        category_labels = {
+            "ssh": "SSH 접속 로그",
+            "su": "SU 접속 로그",
+            "sftp": "SFTP 로그",
+            "window": "Window 로그",
+        }
+
+        dates = [last_monday + timedelta(days=i) for i in range(7)]
+        date_strs = [d.strftime("%Y-%m-%d") for d in dates]
+        pivot = {cat: {d: 0 for d in date_strs} for cat in categories}
+        for cat in categories:
+            pivot[cat]["total"] = 0
+
+        for r in es_records:
+            d = r.get("date")
+            if not d:
+                continue
+            reason = r.get("reason")
+            if reason == "ssh":
+                pivot["ssh"][d] += 1
+                pivot["ssh"]["total"] += 1
+            elif reason == "su":
+                pivot["su"][d] += 1
+                pivot["su"]["total"] += 1
+            elif r.get("sftp_file") and r["sftp_file"] != "-":
+                pivot["sftp"][d] += 1
+                pivot["sftp"]["total"] += 1
+            elif reason == "window":
+                pivot["window"][d] += 1
+                pivot["window"]["total"] += 1
+
+        # ==========================
+        # [B] 아래쪽 표: PostgreSQL
+        # ==========================
+        q = Q()
+        if start:
+            q &= Q(date__gte=start)
+        if end:
+            q &= Q(date__lte=end)
+        if user:
+            q &= Q(user=user)
+
+        from .models import CheckRecord
+        all_records = CheckRecord.objects.filter(q).order_by("-date", "-time")
+
+        # ==========================
+        # [C] 컨텍스트 구성
+        # ==========================
+        context = {
+            # 위쪽 표
+            "pivot": pivot,
+            "dates": date_strs,
+            "category_labels": category_labels,
+            "complete": sum(1 for r in es_records if r.get("appeal_done")),
+            "total": len(es_records),
+            "last_monday": last_monday,
+            "last_sunday": last_sunday,
+
+            # 아래쪽 표
+            "results": all_records,
+            "total": all_records.count(),
+
+            # 검색 조건
+            "start": start,
+            "end": end,
+            "user": user,
+        }
+
         return render(request, "check.html", context)
+
     except Exception as e:
         import traceback
-        print("에러 발생:", e)
         traceback.print_exc()
-        from django.http import HttpResponse
-        return HttpResponse(f"Error: {e}", status=500)
-
+        return HttpResponse(f"<pre>{traceback.format_exc()}</pre>", status=500)
 
 
 def check_by_token(request, token):
