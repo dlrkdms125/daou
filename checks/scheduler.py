@@ -35,7 +35,7 @@ def start_if_enabled():
     sch.add_job(
         send_scheduled_mails,
         "cron",
-        hour=13, minute=56,
+        hour=15, minute=18,
         id="send_mail_job",
         replace_existing=True,
         max_instances=1,

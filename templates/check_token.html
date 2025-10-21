@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-    {% load dict_extras %}
+{% load dict_extras %}
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -7,7 +7,6 @@
   <title>점검/소명 관리</title>
   <link rel="stylesheet" href="/static/style.css"/>
   <style>
-    /* 요약 집계표 */
     .summary-table table {
       border-collapse: collapse;
       width: 100%;
@@ -21,12 +20,63 @@
       background: #f5f5f5;
       font-weight: bold;
     }
+
+    table.grid {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed; /* 고정 레이아웃 */
+    }
+
+    table.grid th, table.grid td {
+      border: 1px solid #000;
+      padding: 6px 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    /* ✅ SFTP 셀: 긴 경로 줄바꿈 */
+    td.mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+      word-break: break-all;
+      white-space: normal;
+      max-width: 220px;
+      overflow-wrap: break-word;
+    }
+
+    /* ✅ 사유 컬럼: 세로형 입력 + 버튼 */
+    td.reason-col {
+      max-width: 200px;
+      white-space: normal;
+      word-break: break-word;
+      text-align: center;
+    }
+
+    input.reason-input {
+      width: 95%;
+      padding: 4px;
+      margin-bottom: 4px;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+
+    button.save-btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    button.save-btn:hover {
+      background-color: #0056b3;
+    }
   </style>
 </head>
+
 <body>
   <header class="topbar">
-
-
     <form class="right" method="get" action="/check">
       <input type="date" name="start" value="{{ start }}"/>
       <span>~</span>
@@ -36,6 +86,7 @@
 
   <main class="container">
     <h2>총 {{ total }}건 중, 입력완료 {{ complete }}건</h2>
+
     <div class="table-wrapper">
       <table class="grid">
         <thead>
@@ -48,34 +99,88 @@
             <th>IP</th>
             <th>스위치계정<br/>(SU)</th>
             <th>SFTP파일</th>
-            <th>사유</th>
+            <th>사유 (200자 이내)</th>
             <th>소명여부</th>
             <th>관리</th>
           </tr>
         </thead>
         <tbody>
           {% if results|length == 0 %}
-          <tr><td colspan="11" style="text-align:center;color:#888;">데이터가 없습니다.</td></tr>
+            <tr><td colspan="11" style="text-align:center;color:#888;">데이터가 없습니다.</td></tr>
           {% else %}
-          {% for r in results %}
-          <tr>
-            <td>{{ r.date }}</td>
-            <td>{{ r.time }}</td>
-            <td>{{ r.item }}</td>
-            <td>{{ r.server }}</td>
-            <td>{{ r.user }}</td>
-            <td>{{ r.ip }}</td>
-            <td>{{ r.switch_su }}</td>
-            <td class="mono">{{ r.sftp_file }}</td>
-            <td>{{ r.reason }}</td>
-            <td>{% if r.appeal_done %}Y{% else %}N{% endif %}</td>
-            <td>{{ r.status }}</td>
-          </tr>
-          {% endfor %}
+            {% for r in results %}
+            <tr>
+              <td>{{ r.date }}</td>
+              <td>{{ r.time }}</td>
+              <td>{{ r.item }}</td>
+              <td>{{ r.server }}</td>
+              <td>{{ r.user }}</td>
+              <td>{{ r.ip }}</td>
+              <td>{{ r.switch_su }}</td>
+              <td class="mono">{{ r.sftp_file }}</td>
+
+              <!-- ✅ 사유 입력 + 저장 버튼 세로 배치 -->
+              <td class="reason-col">
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                  <input type="text" class="reason-input" id="reason-{{ r.id }}"
+                         value="{{ r.reason }}" maxlength="200" placeholder="사유 입력..." />
+                  <button class="save-btn" onclick="saveReason({{ r.id }})">저장하기</button>
+                </div>
+              </td>
+
+              <td>{% if r.appeal_done %}Y{% else %}N{% endif %}</td>
+              <td>{{ r.status }}</td>
+            </tr>
+            {% endfor %}
           {% endif %}
         </tbody>
       </table>
     </div>
   </main>
+
+  <!-- ✅ JavaScript (AJAX 저장 기능) -->
+  <script>
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function saveReason(id) {
+    const input = document.getElementById(`reason-${id}`);
+    const reason = input.value.trim();
+    if (reason.length > 200) {
+      alert("사유는 200자 이내로 입력해주세요.");
+      return;
+    }
+
+    fetch("/check/update_reason/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: new URLSearchParams({ id: id, reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert("저장되었습니다.");
+      } else {
+        alert("저장 실패: " + (data.error || "알 수 없는 오류"));
+      }
+    })
+    .catch(err => alert("에러 발생: " + err));
+  }
+  </script>
 </body>
 </html>

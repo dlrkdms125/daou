@@ -4,6 +4,10 @@ from django.db.models import Q
 from .models import CheckRecord, PersonalLink
 from datetime import date, timedelta, datetime, time
 from mail.models import AccessToken
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+
 
 
 def root(request): # / 로 접속하면 자동으로 /check 페이지로 리다이렉트
@@ -191,6 +195,16 @@ def check_by_token(request, token):
 
     return render(request, "check_token.html", context)
 
-
-
+@csrf_exempt
+@require_POST
+def update_reason(request):
+    record_id = request.POST.get("id")
+    reason = request.POST.get("reason", "")[:200]
+    try:
+        record = CheckRecord.objects.get(id=record_id)
+        record.reason = reason
+        record.save()
+        return JsonResponse({"success": True})
+    except CheckRecord.DoesNotExist:
+        return JsonResponse({"success": False, "error": "record not found"}, status=404)
 
