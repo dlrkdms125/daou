@@ -63,7 +63,7 @@ DATABASES = {
 LANGUAGE_CODE = "ko-kr"
 TIME_ZONE = os.environ.get("TZ", "Asia/Seoul")
 USE_I18N = True
-USE_TZ = False
+USE_TZ = True
 
 # ---- Static files ----
 STATIC_URL = "/static/"

@@ -18,6 +18,7 @@ def start_if_enabled():
     # 스케줄러가 주기적으로 실행할 함수
     from checks.tasks import fetch_from_es
     from mail.tasks import send_scheduled_mails
+    from checks.tasks import fetch_from_es, delete_old_records 
 
     # BackgroundScheduler 객체 생성(백그라운드에서 비동기적으로 동작)
     sch = BackgroundScheduler(timezone=settings.TIME_ZONE)
@@ -37,6 +38,16 @@ def start_if_enabled():
         "cron",
         hour=15, minute=18,
         id="send_mail_job",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+    )
+
+    sch.add_job(
+        delete_old_records,
+        "cron",
+        hour=16, minute=42,
+        id="delete_old_records_job",
         replace_existing=True,
         max_instances=1,
         coalesce=True,

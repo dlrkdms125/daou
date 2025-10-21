@@ -1,6 +1,7 @@
 from elasticsearch import Elasticsearch
 from django.conf import settings
 from .models import CheckRecord
+from django.utils import timezone
 from datetime import datetime, timedelta
 
 def save_es_doc_to_pg(es_doc): # 엘라스틱 서치에서 가져온 JSON문서를 CheckRecord객체로 변환해서 db에 저장
@@ -43,7 +44,7 @@ def fetch_from_es(): # 엘라스틱 서치에서 최신 데이터를 가져와�
             }
         },
         "sort": [{"@timestamp": "asc"}],   # 시간순 정렬 (오래된 것부터)
-        "size": 10000                      # 충분히 크게 설정 (필요 시 scroll 사용)
+        "size": 10000                      
     }
 
     res = es.search(index=settings.ES_INDEX, body=query)
@@ -53,3 +54,20 @@ def fetch_from_es(): # 엘라스틱 서치에서 최신 데이터를 가져와�
         save_es_doc_to_pg(es_doc)
 
     print(f"Fetched {len(res['hits']['hits'])} docs")
+
+def delete_old_records():
+    now = timezone.now() 
+    threshold = now - timedelta(week=4)
+    deleted_count = 0
+
+    for record in CheckRecord.objects.all():
+        record_datetime = datetime.combine(record.date, record.time)
+
+        if timezone.is_naive(record_datetime):
+            record_datetime = timezone.make_aware(record_datetime, timezone.get_current_timezone())
+
+        if record_datetime < threshold:
+            record.delete()
+            deleted_count += 1
+
+    print(f"[LOG] {deleted_count} records deleted (before {threshold})")
