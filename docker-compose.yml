@@ -1,4 +1,4 @@
-version: "3.9"
+
 
 services:
   elasticsearch:
@@ -15,32 +15,3 @@ services:
       interval: 10s
       timeout: 5s
       retries: 30
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.13.2
-    container_name: kibana
-    ports:
-      - "5601:5601"
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    depends_on:
-      - elasticsearch    
-
-  db:
-    image: postgres:15-alpine
-    container_name: postgresql
-    environment:
-      - POSTGRES_DB=eschecker
-      - POSTGRES_USER=kaeunlee
-      - POSTGRES_PASSWORD=qwer1234
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kaeunlee -d eschecker"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"   # 로컬 Django가 DB 접속할 수 있도록 열어줘야 함
-
-volumes:
-  pgdata:

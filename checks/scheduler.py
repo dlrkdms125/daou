@@ -1,5 +1,8 @@
+import os
+import django
 from apscheduler.schedulers.background import BackgroundScheduler
 from django.conf import settings
+from .tasks import fetch_from_es
 
 #  중복 실행 방지를 위한 전역 변수
 _scheduler_started = False
@@ -26,7 +29,7 @@ def start_if_enabled():
     sch.add_job(
         fetch_from_es,
         "cron",
-        hour=0, minute=0,
+        hour=16, minute=52,
         id="fetch_from_es_job",
         replace_existing=True, # 동일 ID의 job이 있으면 덮어쓰기
         max_instances=1, 
@@ -36,7 +39,7 @@ def start_if_enabled():
     sch.add_job(
         send_scheduled_mails,
         "cron",
-        hour=17, minute=14,
+        hour=16, minute=56,
         id="send_mail_job",
         replace_existing=True,
         max_instances=1,

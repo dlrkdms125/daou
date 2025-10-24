@@ -18,4 +18,4 @@ class CheckRecord(models.Model):
 
 class PersonalLink(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    user_key = models.CharField(max_length=100, db_index=True)
+    user_key = models.CharField(max_length=100, db_index=True) 

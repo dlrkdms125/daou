@@ -51,12 +51,8 @@ WSGI_APPLICATION = "eschecker.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": os.getenv("DB_HOST", "127.0.0.1"),
-        "PORT": os.getenv("DB_PORT", "5432"),
-        "NAME": os.getenv("DB_NAME", "eschecker"),
-        "USER": os.getenv("DB_USER", "kaeunlee"),
-        "PASSWORD": os.getenv("DB_PASSWORD", "qwer1234"),
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",  # db.sqlite3 파일 생성
     }
 }
 
@@ -78,11 +74,11 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # ---- Elasticsearch ----
 ES_HOST = os.environ.get("ES_HOST", "http://localhost:9200")
-ES_INDEX = os.environ.get("ES_INDEX", "check*")
+ES_INDEX = os.environ.get("ES_INDEX", "checks_checkrecord")
 DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
 
 # ---- 스케줄러(선택) ----
 SCHEDULER_ENABLED = True
 FETCH_INTERVAL_SECONDS = int(os.getenv("FETCH_INTERVAL_SECONDS", 3600))
 ES_HOST = os.getenv("ES_HOST", "http://localhost:9200")
-ES_INDEX = os.getenv("ES_INDEX", "check")
+ES_INDEX = os.getenv("ES_INDEX", "checks_checkrecord")

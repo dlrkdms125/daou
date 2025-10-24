@@ -4,7 +4,7 @@ from .models import CheckRecord
 from django.utils import timezone
 from datetime import datetime, timedelta
 
-def save_es_doc_to_pg(es_doc): # 엘라스틱 서치에서 가져온 JSON문서를 CheckRecord객체로 변환해서 db에 저장
+def save_es_doc_to_pg(es_doc): # 엘라스틱 서치에서 가져온 JSON문서를 CheckRecord객체로 변환해서 sqlite에 저장
     record = CheckRecord(
         date=es_doc["@timestamp"].split("T")[0], # 날짜
         time=es_doc["@timestamp"].split("T")[1][:8], # 시각
@@ -15,12 +15,13 @@ def save_es_doc_to_pg(es_doc): # 엘라스틱 서치에서 가져온 JSON문서�
         switch_su=es_doc.get("switch_su", ""),
         sftp_file=es_doc.get("sftp_file", ""),
         reason=es_doc.get("reason", ""),
-        appeal_done=es_doc.get("appeal_done", False), # 없으면 False
-        status=es_doc.get("status", "new") # 없으면 new
+        appeal_done=es_doc.get("appeal_done"), 
+        status=es_doc.get("status") 
     )
-    record.save()
+    # record.save()는 orm을 통해 db.sqlite3 파일에 insert 쿼리를 날림
+    record.save() 
 
-def fetch_from_es(): # 엘라스틱 서치에서 최신 데이터를 가져와서 postgresql에 저장하는 역할(전날에 새롭게 es에 추가된 데이터만 postgresql에 저장)
+def fetch_from_es(): # 엘라스틱 서치에서 최신 데이터를 가져와서 SQLITE에 저장하는 역할(전날에 새롭게 es에 추가된 데이터만 SQLITE에 저장)
     es = Elasticsearch(settings.ES_HOST)
 
     # 전날 날짜 계산

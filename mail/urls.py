@@ -4,5 +4,5 @@ from .views import send_mail_view
 from .models import create_access_token 
 
 urlpatterns = [
-    path("send-mail/", send_mail_view, name="send_mail"), #localhost:8000/mail/send-mail/ 경로로 메일 전송
+    
 ]

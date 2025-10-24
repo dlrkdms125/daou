@@ -6,4 +6,5 @@ urlpatterns = [
     # path("admin/", admin.site.urls),
     path("", include("checks.urls")),
     path("mail/", include("mail.urls")),
+    path("check/", include("checks.urls")),
 ]

@@ -119,17 +119,24 @@
               <td>{{ r.switch_su }}</td>
               <td class="mono">{{ r.sftp_file }}</td>
 
-              <!-- ✅ 사유 입력 + 저장 버튼 세로 배치 -->
+              <!-- 사유 입력 + 저장 버튼 세로 배치 -->
               <td class="reason-col">
+              {% if r.item != "vdi" %}
                 <div style="display: flex; flex-direction: column; align-items: center;">
                   <input type="text" class="reason-input" id="reason-{{ r.id }}"
-                         value="{{ r.reason }}" maxlength="200" placeholder="사유 입력..." />
+                        value="{{ r.reason }}" maxlength="200" placeholder="사유 입력..." />
                   <button class="save-btn" onclick="saveReason({{ r.id }})">저장하기</button>
                 </div>
-              </td>
+              {% else %}
+                <!-- vdi 항목은 사유 칸 자체를 표시하지 않음 -->
+                <span style="color: #888;"></span>
+              {% endif %}
+            </td>
 
-              <td>{% if r.appeal_done %}Y{% else %}N{% endif %}</td>
-              <td>{{ r.status }}</td>
+            <td>{% if r.appeal_done %}Y{% else %}N{% endif %}</td>
+            <td>{{ r.status }}</td>
+
+
             </tr>
             {% endfor %}
           {% endif %}
@@ -138,7 +145,7 @@
     </div>
   </main>
 
-  <!-- ✅ JavaScript (AJAX 저장 기능) -->
+  <!-- JavaScript (AJAX 저장 기능) -->
   <script>
   function getCookie(name) {
     let cookieValue = null;
