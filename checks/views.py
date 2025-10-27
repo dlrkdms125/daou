@@ -66,12 +66,13 @@ def check_view(request):
         es_records = [hit["_source"] for hit in res["hits"]["hits"]]
 
         # pivot 집계
-        categories = ["ssh", "su", "sftp", "window"]
+        categories = ["ssh", "su", "sftp", "window", "vdi"]
         category_labels = {
             "ssh": "SSH 접속 로그",
             "su": "SU 접속 로그",
             "sftp": "SFTP 로그",
             "window": "Window 로그",
+            "vdi": "VDI 로그"
         }
 
         dates = [last_monday + timedelta(days=i) for i in range(7)]
@@ -97,6 +98,9 @@ def check_view(request):
             elif reason == "window":
                 pivot["window"][d] += 1
                 pivot["window"]["total"] += 1
+            elif reason == "vdi":
+                pivot["vdi"][d] += 1
+                pivot["vdi"]["total"] += 1
 
         # ==========================
         # [B] 아래쪽 표: PostgreSQL
@@ -165,12 +169,13 @@ def check_by_token(request, token):
     records = CheckRecord.objects.filter(q).order_by("date", "time")
 
     # 5. pivot 집계 (원래 로직 유지)
-    categories = ["ssh", "su", "sftp", "window"]
+    categories = ["ssh", "su", "sftp", "window","vdi"]
     category_labels = {
         "ssh": "SSH 접속 로그",
         "su": "SU 접속 로그",
         "sftp": "SFTP 로그",
         "window": "Window 로그",
+        "vdi": "VDI 로그"
     }
 
     pivot = {cat: {str(yesterday): 0, "total": 0} for cat in categories}
@@ -189,6 +194,9 @@ def check_by_token(request, token):
         if r.reason == "window":
             pivot["window"][d] += 1
             pivot["window"]["total"] += 1
+        if r.reason == "vdi":
+            pivot["vdi"][d] += 1
+            pivot["vdi"]["vdi"] += 1
 
     context = {
         "results": records,
