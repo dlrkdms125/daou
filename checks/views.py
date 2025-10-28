@@ -224,3 +224,20 @@ def update_reason(request):
     except CheckRecord.DoesNotExist:
         return JsonResponse({"success": False, "error": "record not found"}, status=404)
 
+
+@csrf_exempt
+@require_POST
+def update_reason(request):
+    record_id = request.POST.get("id")
+    new_reason = request.POST.get("reason","").strip()
+
+    try:
+        record = CheckRecord.objects.get(id=record_id)
+        record.reason = new_reason
+        record.appeal_done = bool(new_reason)
+        record.save()
+        return JsonResponse({"success": True})
+    except CheckRecord.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Record not found"}, status=404)
+    except Execption as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)

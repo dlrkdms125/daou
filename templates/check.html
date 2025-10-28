@@ -103,12 +103,7 @@
             <td>{{ r.ip }}</td>
             <td>{{ r.switch_su }}</td>
            <td class="mono">{{ r.sftp_file }}</td>
-           <td class="reason-col">
-            {% if r.item != "vdi" %}
-              {{ r.reason }}
-            {% else %}
-              <span style="color: #888;"></span>
-            {% endif %}
+           <td class="reason-col">{{ r.reason }}
           </td>
             <td>{% if r.appeal_done %}Y{% else %}N{% endif %}</td>
             <td>{{ r.status }}</td>
