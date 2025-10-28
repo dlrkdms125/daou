@@ -2,7 +2,7 @@ from elasticsearch import Elasticsearch
 from django.conf import settings
 from .models import CheckRecord
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 def save_es_doc_to_pg(es_doc): # 엘라스틱 서치에서 가져온 JSON문서를 CheckRecord객체로 변환해서 sqlite에 저장
     record = CheckRecord(
@@ -20,12 +20,12 @@ def save_es_doc_to_pg(es_doc): # 엘라스틱 서치에서 가져온 JSON문서�
     )
     # record.save()는 orm을 통해 db.sqlite3 파일에 insert 쿼리를 날림
     record.save() 
-
+KST = timezone(timedelta(hours=9))
 def fetch_from_es(): # 엘라스틱 서치에서 최신 데이터를 가져와서 SQLITE에 저장하는 역할(전날에 새롭게 es에 추가된 데이터만 SQLITE에 저장)
     es = Elasticsearch(settings.ES_HOST)
 
     # 전날 날짜 계산
-    yesterday = datetime.utcnow().date() - timedelta(days=1)
+    yesterday = (datetime.now(KST) - timedelta(days=1)).date()
 
     start1 = f"{yesterday}T00:00:00"
     end1   = f"{yesterday}T05:59:59"
@@ -38,10 +38,13 @@ def fetch_from_es(): # 엘라스틱 서치에서 최신 데이터를 가져와�
         "query": {
             "bool": {
                 "should": [
-                    {"range": {"@timestamp": {"gte": start1, "lte": end1}}},
-                    {"range": {"@timestamp": {"gte": start2, "lte": end2}}}
+                    {"range": {"@timestamp": {"gte": start1, "lte": end1, "time_zone": "+00:00"}}},
+                    {"range": {"@timestamp": {"gte": start2, "lte": end2, "time_zone": "+00:00"}}}
                 ],
-                "minimum_should_match": 1
+                "minimum_should_match": 1,
+                "must_not": [
+                    {"term":{"item.keyword":"vdi"}}
+                ]
             }
         },
         "sort": [{"@timestamp": "asc"}],   # 시간순 정렬 (오래된 것부터)
@@ -50,11 +53,12 @@ def fetch_from_es(): # 엘라스틱 서치에서 최신 데이터를 가져와�
 
     res = es.search(index=settings.ES_INDEX, body=query)
 
-    for hit in res["hits"]["hits"]:
-        es_doc = hit["_source"]
-        save_es_doc_to_pg(es_doc)
-
+    for hit in res["hits"]["hits"]: # 문서들의 리스트를 돌면서
+        es_doc = hit["_source"] # 실제 저장된 문서의 데이터를 es_dos에 저장함
+        save_es_doc_to_pg(es_doc) # 문서를 sqlite에 저장함
+ 
     print(f"Fetched {len(res['hits']['hits'])} docs")
+
 
 def delete_old_records():
     now = timezone.now() 
