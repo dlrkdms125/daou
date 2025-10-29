@@ -73,12 +73,19 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 # STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ---- Elasticsearch ----
-ES_HOST = os.environ.get("ES_HOST", "http://localhost:9200")
-ES_INDEX = os.environ.get("ES_INDEX", "checks_checkrecord")
+ES_HOST = os.environ.get("ES_HOST", "http://175.115.93.52:9200")
+ES_INDEX = os.getenv(
+    "ES_INDEX",
+    "ssh-*,su-*,windows-*,sftp-*,vdi-*"
+)
 DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
 
 # ---- 스케줄러(선택) ----
 SCHEDULER_ENABLED = True
 FETCH_INTERVAL_SECONDS = int(os.getenv("FETCH_INTERVAL_SECONDS", 3600))
-ES_HOST = os.getenv("ES_HOST", "http://localhost:9200")
-ES_INDEX = os.getenv("ES_INDEX", "checks_checkrecord")
+ES_HOST = os.getenv("ES_HOST", "http://175.115.93.52:9200")
+ES_INDEX = os.getenv(
+    "ES_INDEX",
+    "ssh-*,su-*,windows-*,sftp-*,vdi-*"
+)
+
