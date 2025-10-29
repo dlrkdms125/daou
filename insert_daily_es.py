@@ -10,7 +10,7 @@ def insert_daily_logs():
         "user": "kaeunlee",
         "switch_su": "-",
         "sftp_file": "C:\\Users\\daou\\Desktop\\전산실 HW",
-        "reason": "window",
+        "reason": "",
         "appeal_done": False,  
         "status": "new",
     }

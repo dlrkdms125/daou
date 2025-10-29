@@ -29,7 +29,7 @@ def start_if_enabled():
     sch.add_job(
         fetch_from_es,
         "cron",
-        hour=14, minute=39,
+        hour=13, minute=8,
         id="fetch_from_es_job",
         replace_existing=True, # 동일 ID의 job이 있으면 덮어쓰기
         max_instances=1, 
@@ -39,7 +39,7 @@ def start_if_enabled():
     sch.add_job(
         send_scheduled_mails,
         "cron",
-        hour=14, minute=21,
+        hour=13, minute=9,
         id="send_mail_job",
         replace_existing=True,
         max_instances=1,
